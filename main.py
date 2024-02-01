@@ -16,25 +16,30 @@ y = np.random.uniform(0, 3, num_organisms)
 vx = np.random.normal(0, 0.01, num_organisms)  # Initial x velocity
 vy = np.random.normal(0, 0.01, num_organisms)  # Initial y velocity
 radii = np.random.uniform(0.03, 0.07, num_organisms)
+colors = ['lightgreen'] * num_organisms  # Initialize all organisms with lightgreen color
 
 # Initialize virus parameters
 virus_x = np.random.uniform(0, 3)
 virus_y = np.random.uniform(0, 3)
-virus_radius = np.random.uniform(0.05, 0.1)
+virus_radius = np.random.uniform(0.09, 0.1)
 virus_duration = 50  # Duration for which virus remains at one position
 virus_counter = 0  # Counter to track virus duration
 
-def plot_organism(x, y, r, ax):
-    circle = Circle([x, y], r, edgecolor='g', facecolor='lightgreen', zorder=8)
+def plot_organism(x, y, r, color, ax):
+    circle = Circle([x, y], r, edgecolor='g', facecolor=color, zorder=8)
     ax.add_artist(circle)
 
 def plot_virus(x, y, r, ax):
-    circle = Circle([x, y], r, edgecolor='darkred', facecolor='red', zorder=8)
+    circle = Circle([x, y], r, edgecolor='darkred', facecolor='red', zorder=1)
     ax.add_artist(circle)
 
+def check_collision(x_org, y_org, r_org, x_virus, y_virus, r_virus):
+    distance = np.sqrt((x_org - x_virus) ** 2 + (y_org - y_virus) ** 2)
+    return distance <= r_org + r_virus
+
 def update(frame):
-    global virus_x, virus_y, virus_radius, virus_counter
-    
+    global virus_x, virus_y, virus_radius, virus_counter, colors
+    plt.savefig('image.png', dpi=100)
     ax.clear()
     ax.set_aspect('equal')
     ax.set_xlim(0, 3)
@@ -58,19 +63,24 @@ def update(frame):
         vx[i] += np.random.normal(0, 0.001)
         vy[i] += np.random.normal(0, 0.001)
         
-        plot_organism(x[i], y[i], radii[i], ax)
+        # Check collision with virus
+        if check_collision(x[i], y[i], radii[i], virus_x, virus_y, virus_radius):
+            if colors[i] != 'orange':
+                colors[i] = 'orange'
+        
+        plot_organism(x[i], y[i], radii[i], colors[i], ax)
     
     # Update the virus position and duration
     if virus_counter == 0:
         # Reset virus position and radius
         virus_x = np.random.uniform(0, 3)
         virus_y = np.random.uniform(0, 3)
-        virus_radius = np.random.uniform(0, 0.1)
+        virus_radius = np.random.uniform(0.08, 0.1)
         virus_counter = virus_duration
     else:
         plot_virus(virus_x, virus_y, virus_radius, ax)
         virus_counter -= 1
 
 fig, ax = plt.subplots() 
-ani = FuncAnimation(fig, update, frames=range(1000), repeat=False, interval=8)  # Decrease the interval
+ani = FuncAnimation(fig, update, frames=range(1000), repeat=False, interval=20)  # Decrease the interval
 plt.show()
