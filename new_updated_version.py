@@ -5,7 +5,7 @@ from matplotlib.patches import Circle
 
 # Set parameters
 parameters = {
-    'population_size': 25,
+    'population_size': 50,
     'virus_size': 2,
     'antivirus_size': 5,
     'total_generation': 50,
@@ -58,7 +58,7 @@ class Population:
         collision_detected = False
         for virus in vir_obj_instance:
             distance = np.sqrt((self.x - virus.x)**2 + (self.y - virus.y)**2)
-            if distance < 0.1:  # Adjust this value according to your circle radius
+            if distance < 0.3:  # Adjust this value according to your circle radius
                 collision_detected = True
                 break
 
@@ -105,7 +105,6 @@ class Virus(Population):
                 self.shape.set_center((self.x, self.y))
                 self.deploy  = False
 
-
 class Antivirus(Population):
     def __init__(self, parameters, name, ax):
         super().__init__(parameters, name, ax)
@@ -113,13 +112,14 @@ class Antivirus(Population):
         self.efficiency = random.uniform(4, 7)
         self.color = 'blue'
         self.shape = Circle([self.x, self.y], 0.1, facecolor=self.color, edgecolor='green')
-
+        self.deploy = False
+        
     @staticmethod
     def create_antivirus_instances(parameters, ax):
         antivirus_objs = []
         for i in range(parameters['antivirus_size']):
             antivirus_instance = Antivirus(parameters, f"object {i}", ax)
-            ax.add_artist(antivirus_instance.shape)
+            ax.add_artist(antivirus_instance.shape)#.set_visible(False)
             antivirus_objs.append(antivirus_instance)
         return antivirus_objs
 
@@ -133,20 +133,39 @@ ax.set_title('Corona Virus evolution model')
 # Creating population, virus, and antivirus instances
 pop_obj_instance = Population.create_population_instances(parameters, ax)
 vir_obj_instance = Virus.create_virus_instances(parameters, ax)
-antivirus_obj_instance = Antivirus.create_antivirus_instances(parameters, ax)
+# antivirus_obj_instance = Antivirus.create_antivirus_instances(parameters, ax)
+
+# Initialize an empty list for antivirus instances
+antivirus_obj_instance = []
 
 # Deploying population and updating frame
 for _ in range(500):
+    # Update population positions and check for infections
     for pop in pop_obj_instance:
         pop.update_position(vir_obj_instance)
-        if pop.is_infected == True:
-          count_infected += 1
+        if pop.is_infected: 
+            count_infected += 1
+    # Update virus positions
     for vir in vir_obj_instance:
         vir.virus_position()
-    if count_infected >= 3:
-      for antivir in antivirus_obj_instance:
-          antivir.update_position(vir_obj_instance)
+
+    # Calculate the percentage of infected population
+    infected_percentage = (count_infected / parameters['population_size']) * 100
+    
+    # Deploy antivirus if the infected percentage is greater than 30%
+    if infected_percentage > 15 and not antivirus_obj_instance:
+        antivirus_obj_instance = Antivirus.create_antivirus_instances(parameters, ax)
+    
+    # Update antivirus positions if they have been deployed
+    if antivirus_obj_instance:
+        for antivir in antivirus_obj_instance:
+            antivir.update_position(vir_obj_instance)
+
+    # for antivir in antivirus_obj_instance:
+    #     antivir.update_position(vir_obj_instance)
+    
     plt.pause(0.011)
+    count_infected = 0 # Reset the count for the next iteration
 
 for pop in pop_obj_instance:
     print(f"Population {pop.name}: Health = {pop.health}, Color = {pop.color}")
@@ -154,5 +173,6 @@ for pop in pop_obj_instance:
       count_infected += 1
     print("infected number is: ", count_infected)
 print("\n")
+
 
 plt.show()
