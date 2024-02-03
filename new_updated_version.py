@@ -5,9 +5,9 @@ from matplotlib.patches import Circle
 
 # Set parameters
 parameters = {
-    'population_size': 50,
+    'population_size': 100,
     'virus_size': 2,
-    'antivirus_size': 5,
+    'antivirus_size': 10,
     'total_generation': 50,
     'dt': 0.5,
     'x_min': 0.50,
@@ -32,6 +32,7 @@ class Population:
         self.angle = np.random.uniform(0, 2 * np.pi)  # Initial angle in radians
         self.speed = 0.05 # Linear speed
         self.is_infected = False
+        self.is_recovered = False
         
     @staticmethod
     def create_population_instances(parameters, ax):
@@ -42,7 +43,7 @@ class Population:
             pop_objs.append(population_instance)
         return pop_objs
 
-    def update_position(self, vir_obj_instance):
+    def update_position(self, vir_obj_instance, antivirus_obj_instance):
         # Update position along the linear path
         self.x += self.speed * np.cos(self.angle)
         self.y += self.speed * np.sin(self.angle)
@@ -55,17 +56,31 @@ class Population:
         self.y = np.clip(self.y, parameters['y_min'], parameters['y_max'])
 
         # Check for collision with virus
-        collision_detected = False
+        collision_detected_virus= False
         for virus in vir_obj_instance:
-            distance = np.sqrt((self.x - virus.x)**2 + (self.y - virus.y)**2)
-            if distance < 0.3:  # Adjust this value according to your circle radius
-                collision_detected = True
+            distance_virus = np.sqrt((self.x - virus.x)**2 + (self.y - virus.y)**2)
+            if distance_virus < 0.3:  # Adjust this value according to your circle radius
+                collision_detected_virus = True
                 break
 
-        if collision_detected:
+        if collision_detected_virus:
             self.color = 'red'  # Change color if collision occurs
             self.health = 0
             self.is_infected = True
+
+        # Check for collision with virus
+        collision_detected_antivirus= False
+        if self.color == 'red':
+            # collision_detected_antivirus= False
+            for antivirus in antivirus_obj_instance:
+                distance_antivirus = np.sqrt((self.x - antivirus.x)**2 + (self.y - antivirus.y)**2)
+                if distance_antivirus < 0.5:  # Adjust this value according to your circle radius
+                    collision_detected_antivirus = True
+                    break
+            if collision_detected_antivirus:
+                self.color = 'skyblue'  # Change color if collision occurs
+                self.health = random.randint(2,5)
+                self.is_recovered = True
         self.shape.set_color(self.color)
         self.shape.set_center((self.x, self.y))
         self.color = self.shape.get_facecolor()  # Save the current color state
@@ -142,7 +157,7 @@ antivirus_obj_instance = []
 for _ in range(500):
     # Update population positions and check for infections
     for pop in pop_obj_instance:
-        pop.update_position(vir_obj_instance)
+        pop.update_position(vir_obj_instance,antivirus_obj_instance)
         if pop.is_infected: 
             count_infected += 1
     # Update virus positions
@@ -159,7 +174,7 @@ for _ in range(500):
     # Update antivirus positions if they have been deployed
     if antivirus_obj_instance:
         for antivir in antivirus_obj_instance:
-            antivir.update_position(vir_obj_instance)
+            antivir.update_position(vir_obj_instance, antivirus_obj_instance)
 
     # for antivir in antivirus_obj_instance:
     #     antivir.update_position(vir_obj_instance)
